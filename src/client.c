@@ -145,16 +145,20 @@ int main(int argc, char *argv[])
   sockfd = get_socket(urlinfo->hostname, urlinfo->port);
   send_request(sockfd, urlinfo->hostname, urlinfo->port, urlinfo->path);
 
+  // did this backwards, -h suppresses header instead of showing it
+  // unfortunately, this cannot be reversed for some unknown reason, switching the conditionals produces a segfault
+  // it's maddening
+
   while ((numbytes = recv(sockfd, buf, BUFSIZE - 1, 0)) > 0) {
   // print the data we got back to stdout
-    if (argc == 2) 
+    if (argc == 3 && strcmp(argv[2], "-h") == 0)
     {
-      printf("%s\n", buf);
+      fprintf(stdout, "%s\n", buf);
     } 
-    else if (strcmp(argv[2], "-h") == 0) 
-    { /* if we pass the -h no header flag */
+    else if (argc == 2)
+    { /* if we don't pass the -h header flag */
       char *newbuf = strstr(buf, "\n\n");
-      printf("%s\n", newbuf);
+      fprintf(stdout, "%s\n", newbuf);
     }
   }
 
@@ -172,12 +176,12 @@ int main(int argc, char *argv[])
 
     while ((numbytes = recv(sockfd, buf, BUFSIZE - 1, 0)) > 0) {
     // print the data we got back to stdout
-      if (argc == 2) {
-        printf("%s\n", buf);
+      if (argc == 3 && strcmp(argv[2], "-h") == 0) {
+        fprintf(stdout, "%s\n", buf);
       } 
-      else if (strcmp(argv[2], "-h") == 0) { /* if we pass the -h no header flag */
+      else if (argc == 2) { /* if we pass the -h no header flag */
         char *newbuf = strstr(buf, "\n\n");
-        printf("newbuf: %s\n", newbuf);
+        fprintf(stdout, "%s\n", newbuf);
       }
     }
   }
