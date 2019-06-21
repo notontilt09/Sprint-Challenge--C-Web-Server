@@ -123,6 +123,7 @@ int main(int argc, char *argv[])
 {  
   int sockfd, numbytes;  
   char buf[BUFSIZE];
+  char noheaderbuf[BUFSIZE];
 
   if (argc < 2 || argc > 3) {
     fprintf(stderr,"usage: client HOSTNAME:PORT/PATH [-h]\n");
@@ -146,6 +147,10 @@ int main(int argc, char *argv[])
   send_request(sockfd, urlinfo->hostname, urlinfo->port, urlinfo->path);
 
   while ((numbytes = recv(sockfd, buf, BUFSIZE - 1, 0)) > 0) {
+    // break out of this loop if we get a 301 moved
+    if (strstr(buf, "HTTP/1.1 301")) {
+      break;
+    }
   // print the data we got back to stdout
     if (argc == 3 && strcmp(argv[2], "-h") == 0)
     {
@@ -153,10 +158,14 @@ int main(int argc, char *argv[])
     } 
     else if (argc == 2)
     { /* if we don't pass the -h header flag */
-      char *newbuf = strstr(buf, "\n\n");
-      fprintf(stdout, "%s\n", newbuf);
+
+      // set up pointer to the double \n which occur at end of header
+      char *headless_buf = strstr(buf, "\n\n");
+      fprintf(stdout, "%s\n", headless_buf);
     }
   }
+
+
 
   char *redirect = strstr(buf, "HTTP/1.1 301");
 
