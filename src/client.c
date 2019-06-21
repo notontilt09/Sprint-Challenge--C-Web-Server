@@ -124,8 +124,8 @@ int main(int argc, char *argv[])
   int sockfd, numbytes;  
   char buf[BUFSIZE];
 
-  if (argc != 2) {
-    fprintf(stderr,"usage: client HOSTNAME:PORT/PATH\n");
+  if (argc < 2 || argc > 3) {
+    fprintf(stderr,"usage: client HOSTNAME:PORT/PATH [-h]\n");
     exit(1);
   }
 
@@ -147,7 +147,15 @@ int main(int argc, char *argv[])
 
   while ((numbytes = recv(sockfd, buf, BUFSIZE - 1, 0)) > 0) {
   // print the data we got back to stdout
-    printf("%s\n", buf);
+    if (argc == 2) 
+    {
+      printf("%s\n", buf);
+    } 
+    else if (strcmp(argv[2], "-h") == 0) 
+    { /* if we pass the -h no header flag */
+      char *newbuf = strstr(buf, "\n\n");
+      printf("%s\n", newbuf);
+    }
   }
 
   char *redirect = strstr(buf, "HTTP/1.1 301");
@@ -164,7 +172,13 @@ int main(int argc, char *argv[])
 
     while ((numbytes = recv(sockfd, buf, BUFSIZE - 1, 0)) > 0) {
     // print the data we got back to stdout
-      printf("%s\n", buf);
+      if (argc == 2) {
+        printf("%s\n", buf);
+      } 
+      else if (strcmp(argv[2], "-h") == 0) { /* if we pass the -h no header flag */
+        char *newbuf = strstr(buf, "\n\n");
+        printf("newbuff: %s\n", newbuf);
+      }
     }
   }
 
