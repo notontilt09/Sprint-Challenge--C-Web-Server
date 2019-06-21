@@ -145,10 +145,6 @@ int main(int argc, char *argv[])
   sockfd = get_socket(urlinfo->hostname, urlinfo->port);
   send_request(sockfd, urlinfo->hostname, urlinfo->port, urlinfo->path);
 
-  // did this backwards, -h suppresses header instead of showing it
-  // unfortunately, this cannot be reversed for some unknown reason, switching the conditionals produces a segfault
-  // it's maddening
-
   while ((numbytes = recv(sockfd, buf, BUFSIZE - 1, 0)) > 0) {
   // print the data we got back to stdout
     if (argc == 3 && strcmp(argv[2], "-h") == 0)
