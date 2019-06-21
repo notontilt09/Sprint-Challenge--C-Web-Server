@@ -48,6 +48,20 @@ urlinfo_t *parse_url(char *url)
   ///////////////////
   // IMPLEMENT ME! //
   ///////////////////
+
+  // stripping http:// and https:// off of url if they are present
+  char *http = strstr(hostname, "http://");
+  char *https = strstr(hostname, "https://");
+
+  if (http != NULL) {
+    hostname += 7;
+  }
+
+  if (https!= NULL) {
+    hostname += 8;
+  }
+
+  // setting up pointers to path and port
   path = strchr(hostname, '/');
   *path = '\0';
   path++;
@@ -55,6 +69,7 @@ urlinfo_t *parse_url(char *url)
   *port = '\0';
   port++;
   
+  // assigning hostname, path and port to the urlinfo struct properties
   urlinfo->hostname = hostname;
   urlinfo->path = path;
   urlinfo->port = port;
