@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
       } 
       else if (strcmp(argv[2], "-h") == 0) { /* if we pass the -h no header flag */
         char *newbuf = strstr(buf, "\n\n");
-        printf("newbuff: %s\n", newbuf);
+        printf("newbuf: %s\n", newbuf);
       }
     }
   }
