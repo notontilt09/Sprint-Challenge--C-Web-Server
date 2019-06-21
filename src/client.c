@@ -61,13 +61,20 @@ urlinfo_t *parse_url(char *url)
     hostname += 8;
   }
 
-  // setting up pointers to path and port
+  // setting up pointer to path
   path = strchr(hostname, '/');
   *path = '\0';
   path++;
+
+  // setting up pointer to port and defaulting to port 80 if no colon in url
   port = strchr(hostname, ':');
-  *port = '\0';
-  port++;
+  if (port != NULL) {
+    *port = '\0';
+    port++;
+  } else {
+    port = "80";
+  }
+
   
   // assigning hostname, path and port to the urlinfo struct properties
   urlinfo->hostname = hostname;
