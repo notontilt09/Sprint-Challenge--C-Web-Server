@@ -49,6 +49,39 @@ urlinfo_t *parse_url(char *url)
   // IMPLEMENT ME! //
   ///////////////////
 
+  // stripping http:// and https:// off of url if they are present
+  char *http = strstr(hostname, "http://");
+  char *https = strstr(hostname, "https://");
+
+  if (http != NULL) {
+    hostname += 7;
+  }
+
+  if (https!= NULL) {
+    hostname += 8;
+  }
+
+  // setting up pointer to path
+  path = strchr(hostname, '/');
+  *path = '\0';
+  path++;
+
+  // setting up pointer to port and defaulting to port 80 if no colon in url
+  port = strchr(hostname, ':');
+  if (port != NULL) {
+    *port = '\0';
+    port++;
+  } else {
+    port = "80";
+  }
+
+  
+  // assigning hostname, path and port to the urlinfo struct properties
+  urlinfo->hostname = hostname;
+  urlinfo->path = path;
+  urlinfo->port = port;
+
+
   return urlinfo;
 }
 
@@ -71,17 +104,29 @@ int send_request(int fd, char *hostname, char *port, char *path)
   ///////////////////
   // IMPLEMENT ME! //
   ///////////////////
+  int request_length = sprintf(request, "GET /%s HTTP/1.1\n"
+                                        "Host: %s:%s\n"
+                                        "Connection: close\n"
+                                        "\n",
+                                        path, hostname, port);
+  
+  rv = send(fd, request, request_length, 0);
 
-  return 0;
+  if (rv < 0) {
+    perror("send");
+  }
+
+  return rv;
 }
 
 int main(int argc, char *argv[])
 {  
   int sockfd, numbytes;  
   char buf[BUFSIZE];
+  char noheaderbuf[BUFSIZE];
 
-  if (argc != 2) {
-    fprintf(stderr,"usage: client HOSTNAME:PORT/PATH\n");
+  if (argc < 2 || argc > 3) {
+    fprintf(stderr,"usage: client HOSTNAME:PORT/PATH [-h]\n");
     exit(1);
   }
 
@@ -96,6 +141,61 @@ int main(int argc, char *argv[])
   ///////////////////
   // IMPLEMENT ME! //
   ///////////////////
+  urlinfo_t *urlinfo = parse_url(argv[1]);
+
+  sockfd = get_socket(urlinfo->hostname, urlinfo->port);
+  send_request(sockfd, urlinfo->hostname, urlinfo->port, urlinfo->path);
+
+  while ((numbytes = recv(sockfd, buf, BUFSIZE - 1, 0)) > 0) {
+    // break out of this loop if we get a 301 moved
+    if (strstr(buf, "HTTP/1.1 301")) {
+      break;
+    }
+  // print the data we got back to stdout
+    if (argc == 3 && strcmp(argv[2], "-h") == 0)
+    {
+      fprintf(stdout, "%s\n", buf);
+    } 
+    else if (argc == 2)
+    { /* if we don't pass the -h header flag */
+
+      // set up pointer to the double \n which occur at end of header
+      char *headless_buf = strstr(buf, "\n\n");
+      fprintf(stdout, "%s\n", headless_buf);
+    }
+  }
+
+
+
+  char *redirect = strstr(buf, "HTTP/1.1 301");
+
+  if (redirect != NULL) {
+    char *loc = strstr(buf, "http");
+    char *endloc = strchr(loc, '\n');
+    *endloc = '\0';
+    
+    urlinfo = parse_url(loc);
+
+    sockfd = get_socket(urlinfo->hostname, urlinfo->port);
+    send_request(sockfd, urlinfo->hostname, urlinfo->port, urlinfo->path);
+
+    while ((numbytes = recv(sockfd, buf, BUFSIZE - 1, 0)) > 0) {
+    // print the data we got back to stdout
+      if (argc == 3 && strcmp(argv[2], "-h") == 0) {
+        fprintf(stdout, "%s\n", buf);
+      } 
+      else if (argc == 2) { /* if we pass the -h no header flag */
+        char *newbuf = strstr(buf, "\n\n");
+        fprintf(stdout, "%s\n", newbuf);
+      }
+    }
+  }
+
+  free(urlinfo);
+  close(sockfd);
+
+
+  
 
   return 0;
 }
